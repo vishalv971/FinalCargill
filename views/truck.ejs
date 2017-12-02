@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <title>Truck Driver</title>
+    <style>
+      #right-panel {
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+
+      #right-panel select, #right-panel input {
+        font-size: 15px;
+      }
+
+      #right-panel select {
+        width: 100%;
+      }
+
+      #right-panel i {
+        font-size: 12px;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        background-image: url(http://supernovathemes.com/wp-content/themes/supernovathemes/images/bg/b36.png);
+      }
+      #map {
+            height: 100%;
+            width: 100%;
+            margin: 0px;
+            padding: 0px;
+      }
+      #right-panel {
+        margin: 20px;
+        border-width: 2px;
+        width: 20%;
+        height: 400px;
+        float: left;
+        text-align: left;
+        padding-top: 0;
+      }
+      #directions-panel {
+        margin-top: 10px;
+        background-color: #E1F9FC;
+        padding: 10px;
+        overflow: scroll;
+        height: 20%;
+        width: 70%;
+      }
+    </style>
+  </head>
+  <body onload="submit">
+    <center><h2 style="color:white">Truck Driver's Interface</center>
+    <center><div id="map" style="width:1800px; height:550px ; margin:0 auto"></div></center>
+    <div>
+    <br>
+    <center>
+      <input class="btn btn-success"type="submit" id="submit">
+    </center>
+    </div>
+    <center>
+    <div id="directions-panel"></div>
+    </div>
+    <br>
+    <form method="POST" action="/rtlTracking">
+    <button class="btn btn-danger" id="goRTL">Real Time Location Tracking</button>
+    </form>
+    </center>
+    <script>
+
+      function initMap() {
+        var directionsService = new google.maps.DirectionsService;
+        var directionsDisplay = new google.maps.DirectionsRenderer;
+        var map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: {lat: 12.97, lng: 77.59}
+        });
+        directionsDisplay.setMap(map);
+
+        document.getElementById('submit').addEventListener('click', function() {
+          calculateAndDisplayRoute(directionsService, directionsDisplay);
+        });
+      }
+
+      if (navigator.geolocation)
+      {
+          navigator.geolocation.getCurrentPosition(function(position)
+          {
+              localStorage.setItem("lat",position.coords.latitude);
+              localStorage.setItem("lng",position.coords.longitude);
+          });
+      }
+      function calculateAndDisplayRoute(directionsService, directionsDisplay) {
+        var waypts = [];
+        waypts.push({
+          location: localStorage.getItem("start"),
+          stopover: true
+        });
+        /*var checkboxArray = localStorage.getItem("origin");
+        for (var i = 0; i < checkboxArray.length; i++) {
+          if (checkboxArray.options[i].selected) {
+            waypts.push({
+              location: checkboxArray[i].value,
+              stopover: true
+            });
+          }*/
+
+        var org = new google.maps.LatLng(localStorage.getItem("lat"), localStorage.getItem("lng"));
+        var dest = localStorage.getItem("end")
+        directionsService.route({
+          origin: org,
+          destination: dest,
+          waypoints: waypts,
+          optimizeWaypoints: true,
+          travelMode: 'DRIVING'
+        }, function(response, status) {
+          if (status === 'OK') {
+            directionsDisplay.setDirections(response);
+            var route = response.routes[0];
+            var summaryPanel = document.getElementById('directions-panel');
+            summaryPanel.innerHTML = '';
+            // For each route, display summary information.
+            for (var i = 0; i < route.legs.length; i++) {
+              var routeSegment = i + 1;
+              summaryPanel.innerHTML += '<b>Route Segment: ' + routeSegment +
+                  '</b><br>';
+              summaryPanel.innerHTML += route.legs[i].start_address + ' to ';
+              summaryPanel.innerHTML += route.legs[i].end_address + '<br>';
+              summaryPanel.innerHTML += route.legs[i].distance.text + '<br><br>';
+            }
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+}
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXOxaqO_gIwNMj9hiSavUMfijNt6GcOws&callback=initMap">
+    </script>
+  </body>
+</html>
